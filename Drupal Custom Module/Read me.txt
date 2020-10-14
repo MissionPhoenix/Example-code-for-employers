@@ -1,0 +1,8 @@
+This custom module was created by copying and editing a template found 
+here: https://www.flocondetoile.fr/blog/filter-content-year-views-drupal-8
+
+This was my first real experience with the coding within the symphony framework ( or any MVC framework ) 
+Feb 2020. I have gained a decent amount of Laravel experience since then.
+
+I think I could write a Drupal Module from scratch but it would take me a while as I would have to reference the Drupal 
+documentation heaviliy as I go.

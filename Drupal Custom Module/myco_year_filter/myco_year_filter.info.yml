@@ -1,0 +1,11 @@
+name: Mycocheck filter articles by year
+description: Adds an exposed filter to the News page which allows filtering articles by year.
+package: Mycocheck
+
+type: module
+core: 8.x
+
+dependencies:
+  - drupal:views
+
+

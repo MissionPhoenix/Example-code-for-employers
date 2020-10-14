@@ -1,0 +1,119 @@
+<?php
+/**
+ * Based on https://www.flocondetoile.fr/blog/filter-content-year-views-drupal-8
+ *
+ * @author Kitson Consulting <conact@kitson-consulting.co.uk>
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\node\Entity\Node;
+use Drupal\Core\Entity\EntityInterface;
+// use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Cache\CacheBackendInterface;
+// use Drupal\Core\Url;
+// use Symfony\Component\HttpFoundation\RedirectResponse;
+
+// function myco_year_filter_get_select2_options()
+// {
+
+// }
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function myco_year_filter_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if (isset($form['#id']) && $form['#id'] === 'views-exposed-form-news-page-1') {
+    // Rewrite the  -All- field for tags as Categories 
+    $form['field_tags_target_id']['#options']['All'] = t('Categories');  
+    // Fill the options for filter by year based on when content was created
+    $options = &drupal_static(__FUNCTION__);
+    if( is_null( $options ) ) {
+      $cid = 'myco_year_filter:article:year';
+      $data = \Drupal::cache()->get($cid);
+      if( ! $data ) {
+        $options = [];
+        $options['all'] = new TranslatableMarkup('Archive');
+        $query = \Drupal::entityQuery('node');
+        $query->condition('type', 'article')
+          ->condition('status', 1)
+          ->sort('created', 'ASC');
+        $result = $query->execute();
+        if( $result ) {
+          $nodes = Node::loadMultiple($result);
+          foreach ($nodes as $node) {         
+            $created = $node->getCreatedTime();
+            $year = date( 'Y', $created );
+            
+            if (!isset($options[$year])) {
+              $options[$year] = $year;
+            }
+          }
+        }
+
+        $cache_tags = ['node:article:year'];
+        \Drupal::cache()->set($cid, $options, CacheBackendInterface::CACHE_PERMANENT, $cache_tags);
+      }
+      else {
+        $options = $data->data;
+      }
+    }
+
+    // Define options for the select2 JS library
+    $select2_options = [
+      'minimumResultsForSearch' => 'Infinity',
+      'allowClear' => 'false',
+      // 'theme' => 'none',
+    ];
+
+    // Add our select element to the form
+    $form['year'] = [
+      '#title' => new TranslatableMarkup('By year'),
+      '#type' => 'select2',
+      '#options' => $options,
+      '#size' => NULL,
+      '#default_value' => 'all',
+      '#select2' => $select2_options,
+    ];
+
+    // Modify the existing tags/categories select element created by the Views module
+    $form['field_tags_target_id']['#type'] = 'select2';
+    $form['field_tags_target_id']['#select2'] = $select2_options;
+    // ksm( $form);
+
+  }
+}
+
+
+/**
+ * Implements hook_ENTITY_TYPE_presave().
+ */
+function myco_year_filter_node_presave(EntityInterface $entity) {
+  $bundle = $entity->bundle();
+  if( $bundle === 'article' ) {
+    // Check if a article updated has a new year, and invalidate the
+    // options cached used in the custom views filter for filtering by year.
+    $cid = 'myco_year_filter:article:year';
+    $data = \Drupal::cache()->get($cid);
+    if ($data) {
+      $options = $data->data;
+        $query = \Drupal::entityQuery('node');
+        $query->condition('type', 'article')
+          ->condition('status', 1)
+          ->sort('created', 'ASC');
+        $result = $query->execute();
+        if( $result ) {
+          $nodes = Node::loadMultiple($result);
+          foreach ($nodes as $node) {
+          	$created = $node->getCreatedTime();
+          	$year = date( 'Y', $created );
+		}
+	};
+      if (!isset($options[$year])) {
+        Cache::invalidateTags(['node:article:year']);
+      }
+    }
+  }
+}
