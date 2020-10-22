@@ -1,7 +1,7 @@
 // Function to set all elements of className to have the height of the tallest element
 function setHeights(className) {
-	function getMaxHeight(className) {
-		let elements = document.getElementsByClassName(className);
+	var elements = document.getElementsByClassName(className);
+	function getMaxHeight(className, elements) {
 		let maxElementHeight = 0;
 		for ( const element of elements ) {
 			let elementHeight = element.clientHeight;
@@ -9,9 +9,9 @@ function setHeights(className) {
 		}
 		return maxElementHeight;
 	}
-	let elements = document.getElementsByClassName(className);
+	let maxHeight = getMaxHeight(className, elements);
 	for( const element of elements ) {
-    	element.style.height = getMaxHeight(className) + "px";
+    	element.style.height = maxHeight + "px";
     }
 }
 // Call function for required elements
