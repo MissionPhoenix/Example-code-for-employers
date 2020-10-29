@@ -1,11 +1,13 @@
 #!/usr/bin/env php
 <?php
-/** 
+/**
  * Expired DBS/CRB check, to run as a cron job
  *
  * Checks the database for all staff and service provider DBSes that expire in the next 1 months or less.
- * Alerts the managers at Engaging of the soon to expire DBS and other required certifications. 
+ * Alerts the managers at Engaging of the soon to expire DBS and other required certifications.
  * This cron job also sends warnings for car insurance expiry, driving license checks, mot expiry and road tax expiry.
+ *
+ * Portfolio Notes: I extended this file to include warnings for Driving License checks, Road tax and MOT.
  *
  *NOTE dbs_valid_to should be called dbs_valid_from, public_insurance_valid_to should be called public_insurance_valid_from, business *insurance_valid_to should be called business_insurance_valid_from and SLA_valid_to should be called SLA_valid_from.
  *
@@ -30,7 +32,7 @@ $query = "SELECT `id` FROM `accesslevels` WHERE `name` = 'Manager' OR `name` = '
 $statement = $db->prepare( $query );
 $statement->execute();
 $results = $statement->fetchAll( PDO::FETCH_ASSOC );
-$senior_manager_userlevel = (int) $results[0]['id']; 
+$senior_manager_userlevel = (int) $results[0]['id'];
 
 //Get all of the staff
 $sql = "SELECT
@@ -51,27 +53,27 @@ foreach ($rows as $row)
 	{
 		$emailArray[] = $row['email'];
 	}
-} 
+}
 
 //init some arrays for use here
 $trainingExpiryDate = array();
 $trainingExpiryStaff = array();
 $courseName = array();
 
-$sql = "SELECT 
-	`displayname`, 
+$sql = "SELECT
+	`displayname`,
 	`course_name`,
 	MAX(`expiry_date`) AS `expiry_date`
 	FROM (
-	SELECT 
+	SELECT
 	`staff`.`id` AS `staff_id`,
 	`training`.`id` AS `training_id`,
 	`staff`.`displayname`,
-	( CASE 
+	( CASE
 	WHEN `date_assigned` IS NULL THEN '9999-12-31'
-	ELSE DATE_ADD(`staff_training_join`.`date_assigned`, INTERVAL `training`.`valid_days` DAY) 
+	ELSE DATE_ADD(`staff_training_join`.`date_assigned`, INTERVAL `training`.`valid_days` DAY)
 	END )
-	AS `expiry_date`,	
+	AS `expiry_date`,
 	`training`.`course_name`
 FROM `staff`, `staff_training_join`, `training`
 
@@ -81,8 +83,8 @@ AND (`staff`.`finishdate` = '0000-00-00' OR (`staff`.`finishdate` > NOW() AND DA
 ) a
 GROUP BY `staff_id`, `training_id`
 HAVING DATEDIFF(MAX(`expiry_date`), NOW() ) < 31
-UNION 
-SELECT 
+UNION
+SELECT
 	`staff`.`displayname`,
 	`training`.`course_name`,
 	'0000-00-00' AS `expiry_date`
@@ -90,7 +92,7 @@ FROM `staff`, `staff_training_join`, `training`
 
 WHERE `staff`.`id` = `staff_training_join`.`staff_id`
 AND `staff_training_join`.`course_id` = `training`.`id`
-AND ( `staff`.`finishdate` = '0000-00-00' OR `staff`.`finishdate` > NOW() ) 
+AND ( `staff`.`finishdate` = '0000-00-00' OR `staff`.`finishdate` > NOW() )
 AND `date_assigned` IS NULL
 
 ORDER BY `displayname`, `course_name`";
@@ -110,10 +112,10 @@ $message = "Hello Managers,<br />\r\n<br />\r\nThe following staff members or pr
 
 $message .= "<strong>The following expiry warnings are for staff:</strong><br />\r\n";
 
-$query = "SELECT * FROM `staff` 
-		WHERE ( `finishdate` = '0000-00-00' OR `finishdate` > NOW() ) 
-		AND ( DATEDIFF( DATE_ADD( `crb`, INTERVAL 3 YEAR ), NOW() ) < 31 
-		AND ( `crb` < `finishdate` OR `finishdate` = '0000-00-00' ) ) 
+$query = "SELECT * FROM `staff`
+		WHERE ( `finishdate` = '0000-00-00' OR `finishdate` > NOW() )
+		AND ( DATEDIFF( DATE_ADD( `crb`, INTERVAL 3 YEAR ), NOW() ) < 31
+		AND ( `crb` < `finishdate` OR `finishdate` = '0000-00-00' ) )
 		ORDER BY `staff`.`displayname`";
 $statement = $db->prepare( $query );
 $statement->execute();
@@ -149,12 +151,12 @@ $message .= "<br />\r\n";
 
 $message2 = "<br />\r\n<strong>The following expiry warnings are for providers:</strong><br />\r\n";
 
-$query = "SELECT * FROM `providers` 
-WHERE (`finishdate` = '0000-00-00' 
-	OR (`finishdate` > NOW() 
+$query = "SELECT * FROM `providers`
+WHERE (`finishdate` = '0000-00-00'
+	OR (`finishdate` > NOW()
 		AND `finishdate` > DATE_ADD(`dbs_valid_to`, INTERVAL 1096 DAY)
 	) )
-	AND (DATEDIFF( DATE_ADD(`dbs_valid_to`, INTERVAL 1096 DAY), NOW() ) < 31  
+	AND (DATEDIFF( DATE_ADD(`dbs_valid_to`, INTERVAL 1096 DAY), NOW() ) < 31
 		OR `dbs_valid_to` = '0000-00-00')
 ORDER BY `contactname`
 ";
@@ -166,7 +168,7 @@ foreach( $rows as $row )
 {
 	if ($row['dbs_valid_to'] === '0000-00-00 00:00:00')
 	{
-		$message2 .= html( $row['contactname'] ) . " has no DBS date set<br />\r\n"; 
+		$message2 .= html( $row['contactname'] ) . " has no DBS date set<br />\r\n";
 	}
 	else
 	{
@@ -180,12 +182,12 @@ foreach( $rows as $row )
 if( empty( $rows ) ) $message2 .= "There are no DBS expiry warnings for providers. <br />\r\n";
 $message2 .= "<br />\r\n";
 
-$query = "SELECT 
+$query = "SELECT
 		`finishdate`,
 		`public_liability_valid_to`,
 		`contactname`
- 		FROM `providers` 
- 		WHERE ( `finishdate` = '0000-00-00' OR `finishdate` > NOW() ) AND ( DATEDIFF( NOW(), `public_liability_valid_to` ) > 334 AND ( `public_liability_valid_to` < `finishdate` OR `finishdate` = '0000-00-00' ) ) 
+ 		FROM `providers`
+ 		WHERE ( `finishdate` = '0000-00-00' OR `finishdate` > NOW() ) AND ( DATEDIFF( NOW(), `public_liability_valid_to` ) > 334 AND ( `public_liability_valid_to` < `finishdate` OR `finishdate` = '0000-00-00' ) )
  		ORDER BY `contactname`";
 $statement = $db->prepare( $query );
 $statement->execute();
@@ -197,12 +199,12 @@ foreach( $rows as $row )
 }
 if( empty( $rows ) ) $message2 .= "There are no public liability insurance expiry warnings for providers. <br />\r\n";
 $message2 .= "<br />\r\n";
-$query = "SELECT 
+$query = "SELECT
 		`finishdate`,
 		`business_insurance_valid_to`,
 		`contactname`
- 		FROM `providers` 
- 		WHERE ( `finishdate` = '0000-00-00' OR `finishdate` > NOW() ) AND ( DATEDIFF( NOW(), `business_insurance_valid_to` ) > 334 AND ( `business_insurance_valid_to` < `finishdate` OR `finishdate` = '0000-00-00' ) ) 
+ 		FROM `providers`
+ 		WHERE ( `finishdate` = '0000-00-00' OR `finishdate` > NOW() ) AND ( DATEDIFF( NOW(), `business_insurance_valid_to` ) > 334 AND ( `business_insurance_valid_to` < `finishdate` OR `finishdate` = '0000-00-00' ) )
  		ORDER BY `contactname`";
 $statement = $db->prepare( $query );
 $statement->execute();
@@ -215,12 +217,12 @@ foreach( $rows as $row )
 if( empty( $rows ) ) $message2 .= "There are no business insurance expiry warnings for providers. <br />\r\n";
 $message2 .= "<br />\r\n";
 
-$query = $query = "SELECT 
+$query = $query = "SELECT
 		`finishdate`,
 		`sla_valid_to`,
 		`contactname`
- 		FROM `providers` 
- 		WHERE ( `finishdate` = '0000-00-00' OR `finishdate` > NOW() ) AND ( DATEDIFF( NOW(), `sla_valid_to` ) > 334 AND ( `sla_valid_to` < `finishdate` OR `finishdate` = '0000-00-00' ) ) 
+ 		FROM `providers`
+ 		WHERE ( `finishdate` = '0000-00-00' OR `finishdate` > NOW() ) AND ( DATEDIFF( NOW(), `sla_valid_to` ) > 334 AND ( `sla_valid_to` < `finishdate` OR `finishdate` = '0000-00-00' ) )
  		ORDER BY `contactname`";
 $statement = $db->prepare( $query );
 $statement->execute();
@@ -268,7 +270,7 @@ $rows = $statement->fetchALL( PDO::FETCH_ASSOC );
 $subject = "Road tax, M.O.T. and driving license check expiry warnings";
 $message = "<br>\r\n";
 
-foreach( $rows as $row ) 
+foreach( $rows as $row )
 {
 	$licensecheckeddate = $row['driving_license_checked'];
 	if( ( $licensecheckeddate <> '0000-00-00') and ( date( 'Y-m-d' ) >= date( 'Y-m-d', strtotime("+5 months", strtotime( $licensecheckeddate ) ) ) ) and ( date( 'Y-m-d' ) <= date( 'Y-m-d', strtotime("+6 months", strtotime( $licensecheckeddate ) ) ) ) )

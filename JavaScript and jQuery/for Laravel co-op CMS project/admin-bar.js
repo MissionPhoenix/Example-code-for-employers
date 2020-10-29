@@ -1,4 +1,4 @@
-/* JS relating to admin-bar slide out */
+/* JS relating to admin-bar slide out. */
 var adminOut = "No";
 
 $("#admin-tab").click( function (){
