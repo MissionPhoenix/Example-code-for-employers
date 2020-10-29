@@ -1,0 +1,47 @@
+<div id="admin-bar-and-tab" >
+  <div id="admin-bar" class="admin-bar">
+    <div class="admin-buttons">
+      <button id="toggle-editor" class="btn btn-light">Edit: off</button>
+      <button id="save-editor" class="btn btn-light">Save page?</button>
+      <button id="hide-tab" class="btn btn-light">Hide tab</button>
+      <button id="show-meta" class="btn btn-light">Show Meta</button>
+    </div>
+  </div>
+  <div id="admin-tab"><h5>Admin Bar</h5></div>
+</div>
+
+<div id="meta" class="modal fade modal-dialog" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <button type ="button" class="close" data-dismiss="modal">&times;</button>
+        <form id="meta-form" onsubmit="return false">
+          <input id="route-id" type="hidden" value="{{ Route.id }}">
+          <div>
+            <label for="meta-title">Meta Title: </label>
+            <input id="meta-title" type="text" value="{{ Route.meta_title }}" maxlength="60">
+          </div>
+          <div>
+            <label for="meta-description">Meta Description: </label>
+            <textarea id="meta-description" rows="3" maxlength="160">{{ Route.meta_description }}</textarea>
+          </div>
+          <input id="meta-submit" type="submit" value="Save Meta">
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="saved" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Well, that just got saved.</h4>
+      </div>
+      <div class="modal-body">
+        <button type="button" data-dismiss="modal">Great, thanks for that!</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,59 @@
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>{{ Route.meta_title }}</title>
+  <meta content="{{ Route.meta_description }}" name="description"/>
+  <meta id="csrf-token" name="csrf-token" content="{{ csrf_token() }}">
+
+  <!-- Favicons -->
+  <link href="/img/favicon.png" rel="icon">
+  <link href="/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Jost:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+
+   <!-- All general css files as well as view specific files are loaded here. I did not write the assetmanager for this as I am the front end developer for this project -->
+  {% for css in Assets.cssArray %}
+    <link href="{{ css }}" rel="stylesheet">
+  {% endfor %}
+
+  <!-- =======================================================
+  * Template Name: Arsha - v2.2.0
+  * Template URL: https://bootstrapmade.com/arsha-free-bootstrap-html-template-corporate/
+  * Author: BootstrapMade.com
+  * License: https://bootstrapmade.com/license/
+  ======================================================== -->
+</head>
+
+<body>
+<!-- Admin bar -->
+{% if LiveEditEnabled == true %}
+{% embed "/components/admin_bar.twig" %}
+{% endembed %}
+{% endif %}
+  <!-- ======= Header ======= -->
+    {% embed "/components/header.twig" %}
+    {% endembed %}
+  <!-- End Header -->
+
+  <main id="main">
+
+  {% block content %}{% endblock %}
+
+  </main><!-- End #main -->
+
+  <!-- ======= Footer ======= -->
+    {% embed "/components/footer.twig" %}
+    {% endembed %}
+  <!-- End Footer -->
+
+  <a href="#" class="back-to-top"><i class="ri-arrow-up-line"></i></a>
+  <div id="preloader"></div>
+   <!-- All custom JS and jQuery Files. I did not write the assetmanager for this as I am the front end developer for this project -->
+  {% for js in Assets.jsArray %}
+    <script src="{{ js }}"></script>
+  {% endfor %}
+
+</body>
+
+</html>

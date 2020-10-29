@@ -1,0 +1,39 @@
+  <header id="header">
+    <div class="container d-flex align-items-center" style="padding: 1rem 2rem 1rem 1rem">
+      <h1 class="logo mr-auto"><a href="index.html">Dan's Decent Development</a></h1>
+      <!-- <a href="index.html" class="logo mr-auto"><img src="/img/logo.png" alt="" class="img-fluid"></a>-->
+      <nav class="nav-menu d-none d-lg-block">
+        <ul id="nav-menu">
+          {% for menu in Menus %}
+              <li {% if Route.slug == menu.getLink() and menu.children|length > 0 %}
+                    class="active drop-down"
+                  {% elseif Route.slug == menu.getLink() %}
+                    class="active"
+                  {% elseif menu.children|length > 0 %}
+                    class="drop-down"
+                  {% endif %}>
+                <a href="{{menu.getLink()}}">{{menu.title}}</a>
+                {% if menu.children|length > 0 %}
+                  <ul>
+                    {% for child in menu.children %}
+                      <li {% if child.children|length > 0 %}class="drop-down"{% endif %}><a href="{{child.getLink()}}">{{child.title}}</a>
+                          {% if child.children|length > 0 %}
+                            <ul>
+                              {% for baby in child.children %}
+                                <li><a href="{{baby.getLink()}}">{{baby.title}}</a></li>
+                              {% endfor %}
+                            </ul>
+                        {% endif %}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </li>
+          {% endfor %}
+        </ul>
+      </nav><!-- .nav-menu -->
+      <!-- <div>
+        <a href="#about" class="get-started-btn scrollto">Get Started</a>
+      </div> -->
+    </div>
+  </header>
